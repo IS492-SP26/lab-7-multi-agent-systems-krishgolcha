@@ -54,22 +54,24 @@ class GroupChatInterviewPlatform:
         )
 
         # Research Agent - starts the conversation with market analysis
+        # Exercise 2 modification: switched focus from AI interview platforms
+        # to AI-powered employee onboarding tools (competitors: Deel, Rippling, BambooHR, Gusto).
         self.research_agent = autogen.AssistantAgent(
             name="ResearchAgent",
-            system_message="""You are a market research analyst specializing in AI-powered recruitment technology.
+            system_message="""You are a market research analyst specializing in AI-powered employee onboarding and HR technology.
 Your role in this group discussion is to START the conversation by providing competitive landscape analysis.
 
 Your responsibilities:
-- Analyze 3-4 major competitors in AI interview platforms (HireVue, Pymetrics, Codility, Interviewing.io)
+- Analyze 3-4 major competitors in AI-powered employee onboarding tools (Deel, Rippling, BambooHR, Gusto)
 - Summarize their key features, strengths, and weaknesses
-- Identify current market trends in AI-powered recruiting
-- Note unmet market needs and gaps
+- Identify current market trends in AI-powered onboarding and HR automation
+- Note unmet market needs and gaps for onboarding workflows
 
 When you present your findings, be specific with competitor names, features, and data points.
 After presenting your research, invite the AnalysisAgent to identify opportunities based on your findings.
 Keep your response focused and under 400 words.""",
             llm_config=self.llm_config,
-            description="A market research analyst who provides competitive landscape analysis and identifies market gaps in AI interview platforms.",
+            description="A market research analyst who provides competitive landscape analysis and identifies market gaps in AI-powered employee onboarding tools.",
         )
 
         # Analysis Agent - builds on research to identify opportunities
@@ -110,6 +112,24 @@ Keep your response focused and under 400 words.""",
             description="A product designer who creates feature blueprints and user journeys based on identified market opportunities.",
         )
 
+        # Cost Analyst Agent - Exercise 3 addition: estimates development costs per feature
+        self.cost_agent = autogen.AssistantAgent(
+            name="CostAnalyst",
+            system_message="""You are a financial analyst specializing in software product economics.
+Your role in this group discussion is to ANALYZE the cost and ROI of the proposed product.
+
+Your responsibilities:
+- After the BlueprintAgent presents features, estimate development cost ($) and timeline (weeks) for each feature
+- Rank the features by cost-benefit (effort vs. expected impact)
+- Call out any features where cost clearly outweighs near-term benefit
+- Reference specific features from the BlueprintAgent's proposal by name
+
+After your analysis, invite the ReviewerAgent to provide final strategic recommendations that factor in your cost data.
+Keep your response focused and under 400 words.""",
+            llm_config=self.llm_config,
+            description="Financial analyst who estimates development costs, timelines, and ROI ranking for proposed product features.",
+        )
+
         # Reviewer Agent - reviews and concludes with strategic recommendations
         self.reviewer_agent = autogen.AssistantAgent(
             name="ReviewerAgent",
@@ -118,14 +138,15 @@ Your role in this group discussion is to REVIEW and provide final recommendation
 
 Your responsibilities:
 - When the BlueprintAgent presents the product design, evaluate its feasibility and market fit
+- Incorporate the CostAnalyst's cost/ROI ranking when prioritizing recommendations
 - Provide 3-4 strategic recommendations for launch success
-- Suggest a phased implementation approach (MVP → V1 → V2)
+- Suggest a phased implementation approach (MVP → V1 → V2) that reflects cost-benefit trade-offs
 - Identify key risks and mitigation strategies
 
-Reference specific features from the BlueprintAgent and opportunities from earlier discussion.
+Reference specific features from the BlueprintAgent, opportunities from earlier discussion, and cost estimates from the CostAnalyst.
 After your review, conclude the discussion by ending your message with the word TERMINATE.""",
             llm_config=self.llm_config,
-            description="A product executive who reviews blueprints, assesses feasibility, and provides strategic recommendations for launch.",
+            description="A product executive who reviews blueprints, assesses feasibility, incorporates cost/ROI analysis, and provides strategic recommendations for launch.",
         )
 
     def _setup_groupchat(self):
@@ -136,10 +157,11 @@ After your review, conclude the discussion by ending your message with the word 
                 self.research_agent,
                 self.analysis_agent,
                 self.blueprint_agent,
+                self.cost_agent,
                 self.reviewer_agent,
             ],
             messages=[],
-            max_round=8,
+            max_round=10,
             speaker_selection_method="auto",
             allow_repeat_speaker=False,
             send_introductions=True,
@@ -168,13 +190,14 @@ After your review, conclude the discussion by ending your message with the word 
         print("=" * 80 + "\n")
 
         # Initiate the group chat conversation
-        initial_message = """Team, we need to develop a product plan for an AI-powered interview platform.
+        initial_message = """Team, we need to develop a product plan for an AI-powered employee onboarding platform.
 
 Let's collaborate on this:
 1. ResearchAgent: Start by analyzing the competitive landscape
 2. AnalysisAgent: Then identify key market opportunities
 3. BlueprintAgent: Design the product features and user journey
-4. ReviewerAgent: Finally, review and provide strategic recommendations
+4. CostAnalyst: Estimate development costs and ROI ranking for each feature
+5. ReviewerAgent: Finally, review and provide strategic recommendations incorporating the cost analysis
 
 ResearchAgent, please begin with your market analysis."""
 
